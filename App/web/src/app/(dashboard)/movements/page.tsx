@@ -68,7 +68,7 @@ export default function MovementsPage() {
                                     </td>
                                 </tr>
                             ) : movements.map((m) => (
-                                <tr key={m.id} className="hover:bg-blue-500/[0.02] transition-colors">
+                                <tr key={m.id} className="hover:bg-blue-500/2 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2 text-slate-400 font-mono text-xs">
                                             <Clock size={12} />
@@ -83,7 +83,7 @@ export default function MovementsPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className={`flex items-center gap-1.5 text-[10px] font-black px-3 py-1 rounded-full border w-fit ${m.type === 'IN' ? 'bg-emerald-500/5 text-emerald-500 border-emerald-500/20' :
-                                                'bg-blue-500/5 text-blue-500 border-blue-500/20'
+                                            'bg-blue-500/5 text-blue-500 border-blue-500/20'
                                             }`}>
                                             {m.type === 'IN' ? <ArrowDownLeft size={12} /> : <ArrowUpRight size={12} />}
                                             {m.type}

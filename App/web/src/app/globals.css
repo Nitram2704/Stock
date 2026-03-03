@@ -7,7 +7,7 @@
   --color-blue-500: #3b82f6;
   --color-red-500: #ef4444;
   --color-emerald-500: #10b981;
-  
+
   --color-background: var(--slate-900);
   --color-foreground: #f8fafc;
 }
@@ -39,4 +39,54 @@ body {
 .card-gradient {
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Print Styles for Logistics Labels */
+@media print {
+
+  aside,
+  nav,
+  header,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 15px !important;
+    padding: 10px !important;
+  }
+
+  .card-gradient {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    color: black !important;
+    break-inside: avoid;
+    box-shadow: none !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  span,
+  p {
+    color: black !important;
+  }
+
+  svg {
+    filter: brightness(0) !important;
+  }
 }

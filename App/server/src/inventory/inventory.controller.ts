@@ -28,4 +28,9 @@ export class InventoryController {
     async getMovements() {
         return this.inventoryService.getMovements();
     }
+
+    @Get('stats')
+    async getStats() {
+        return this.inventoryService.getStats();
+    }
 }

@@ -166,7 +166,7 @@ export function InventoryTable() {
                                 </td>
                             </tr>
                         ) : filteredProducts.map((product) => (
-                            <tr key={product.id} className="hover:bg-blue-500/[0.02] transition-colors group">
+                            <tr key={product.id} className="hover:bg-blue-500/2 transition-colors group">
                                 <td className="px-6 py-4">
                                     <span className="font-mono text-[11px] font-bold text-blue-400 bg-blue-400/10 px-2 py-1 rounded border border-blue-500/20">
                                         {product.sku_qr}

@@ -4,6 +4,7 @@ import Link from 'next/link';
 const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
     { icon: Box, label: 'Inventory', href: '/inventory' },
+    { icon: History, label: 'Catalog', href: '/catalog' },
     { icon: History, label: 'Movements', href: '/movements' },
     { icon: Users, label: 'Users', href: '/users' },
     { icon: Settings, label: 'Settings', href: '/settings' },
@@ -13,7 +14,7 @@ export function Sidebar() {
     return (
         <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-screen fixed left-0 top-0">
             <div className="p-6">
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-emerald-500 bg-clip-text text-transparent">
+                <h1 className="text-xl font-bold bg-linear-to-r from-blue-500 to-emerald-500 bg-clip-text text-transparent">
                     IOT LOGISTICS
                 </h1>
             </div>

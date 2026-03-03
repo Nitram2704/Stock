@@ -1,37 +1,106 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { KPICard } from '@/components/KPICard';
 import { RealTimeScanList } from '@/components/RealTimeScanList';
 import { WarehouseMap } from '@/components/WarehouseMap';
 import { QRScanner } from '@/components/QRScanner';
 import { DetailStatsModal, DetailType } from '@/components/DetailStatsModal';
-import { Box, Activity, AlertTriangle, PackageCheck, Scan } from 'lucide-react';
+import { Box, Activity, AlertTriangle, PackageCheck, Scan, CheckCircle2, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface DashboardStats {
+    totalProducts: number;
+    movements24h: number;
+    criticalItems: number;
+    storageCapacity: number;
+    currentStock: number;
+}
+
+interface Notification {
+    message: string;
+    type: 'success' | 'error';
+    id: number;
+}
 
 export default function DashboardPage() {
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [activeDetail, setActiveDetail] = useState<{ type: DetailType; title: string; data?: any } | null>(null);
+    const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [notification, setNotification] = useState<Notification | null>(null);
 
-    const handleScan = useCallback(async (sku: string) => {
-        const response = await fetch('http://localhost:3001/api/v1/inventory/scan', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                sku_qr: sku,
-                type: 'IN',
-                quantity: 1,
-                operator_id: null
-            })
-        });
-
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.message || 'Scan rejected');
+    const fetchStats = useCallback(async () => {
+        try {
+            const response = await fetch('http://localhost:3001/api/v1/inventory/stats');
+            if (response.ok) {
+                const data = await response.json();
+                setStats(data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch stats:', error);
         }
     }, []);
 
+    useEffect(() => {
+        fetchStats();
+        const interval = setInterval(fetchStats, 5000); // Poll every 5s for the demo
+        return () => clearInterval(interval);
+    }, [fetchStats]);
+
+    const showNotification = (message: string, type: 'success' | 'error') => {
+        const id = Date.now();
+        setNotification({ message, type, id });
+        setTimeout(() => {
+            setNotification(prev => prev?.id === id ? null : prev);
+        }, 4000);
+    };
+
+    const handleScan = useCallback(async (sku: string) => {
+        try {
+            const response = await fetch('http://localhost:3001/api/v1/inventory/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sku_qr: sku,
+                    type: 'IN',
+                    quantity: 1,
+                    operator_id: null
+                })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Scan rejected');
+            }
+
+            showNotification(`Entry Recorded: ${sku}`, 'success');
+            fetchStats();
+        } catch (error: any) {
+            showNotification(error.message || 'Scan Failed', 'error');
+            throw error; // Re-throw for QRScanner to show its internal error state
+        }
+    }, [fetchStats]);
+
     return (
-        <div className="flex-1">
+        <div className="flex-1 relative">
+            {/* Notification System */}
+            <AnimatePresence>
+                {notification && (
+                    <motion.div
+                        initial={{ y: -100, x: '-50%', opacity: 0 }}
+                        animate={{ y: 20, x: '-50%', opacity: 1 }}
+                        exit={{ y: -100, x: '-50%', opacity: 0 }}
+                        className={`fixed top-0 left-1/2 z-300 flex items-center gap-3 px-6 py-4 rounded-2xl border shadow-2xl backdrop-blur-xl ${notification.type === 'success'
+                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                            : 'bg-red-500/10 border-red-500/20 text-red-400'
+                            }`}
+                    >
+                        {notification.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                        <span className="text-xs font-black uppercase tracking-widest">{notification.message}</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <header className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-3xl font-black tracking-tight text-white uppercase">Neural Logistics Center</h1>
@@ -55,31 +124,31 @@ export default function DashboardPage() {
             <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <KPICard
                     label="Stock Density"
-                    value="12,482"
+                    value={stats?.totalProducts.toLocaleString() || '---'}
                     trend="+2.5%"
                     icon={Box}
-                    onClick={() => setActiveDetail({ type: 'KPI_TOTAL_SKUS', title: 'Stock Density Catalog' })}
+                    onClick={() => setActiveDetail({ type: 'KPI_TOTAL_SKUS', title: 'Stock Density Catalog', data: stats })}
                 />
                 <KPICard
                     label="Flow Rate (24H)"
-                    value="842"
+                    value={stats?.movements24h.toLocaleString() || '---'}
                     trend="+12%"
                     icon={Activity}
-                    onClick={() => setActiveDetail({ type: 'KPI_MOVEMENTS', title: 'Movement Throughput' })}
+                    onClick={() => setActiveDetail({ type: 'KPI_MOVEMENTS', title: 'Movement Throughput', data: stats })}
                 />
                 <KPICard
                     label="Depletion Alerts"
-                    value="14"
+                    value={stats?.criticalItems.toLocaleString() || '---'}
                     icon={AlertTriangle}
-                    variant="alert"
-                    onClick={() => setActiveDetail({ type: 'KPI_CRITICAL', title: 'Critical Depletion Logs' })}
+                    variant={stats && stats.criticalItems > 0 ? 'alert' : 'default'}
+                    onClick={() => setActiveDetail({ type: 'KPI_CRITICAL', title: 'Critical Depletion Logs', data: stats })}
                 />
                 <KPICard
                     label="Storage Capacity"
-                    value="78%"
+                    value={`${stats?.storageCapacity || 0}%`}
                     icon={PackageCheck}
                     variant="success"
-                    onClick={() => setActiveDetail({ type: 'KPI_LOAD', title: 'Volumetric Load Analysis' })}
+                    onClick={() => setActiveDetail({ type: 'KPI_LOAD', title: 'Volumetric Load Analysis', data: stats })}
                 />
             </section>
 

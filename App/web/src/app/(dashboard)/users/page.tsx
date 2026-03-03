@@ -74,7 +74,7 @@ export default function UsersPage() {
                                     </td>
                                 </tr>
                             ) : users.map((u) => (
-                                <tr key={u.id} className="hover:bg-blue-500/[0.02] transition-colors group">
+                                <tr key={u.id} className="hover:bg-blue-500/2 transition-colors group">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-blue-400 font-black text-sm">

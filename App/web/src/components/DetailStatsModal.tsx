@@ -10,7 +10,7 @@ interface DetailStatsModalProps {
     type: DetailType | null;
     title: string;
     onClose: () => void;
-    data?: any;
+    data?: any; // Keeping for generic props, but could be typed if needed
 }
 
 export function DetailStatsModal({ type, title, onClose, data }: DetailStatsModalProps) {
@@ -25,59 +25,65 @@ export function DetailStatsModal({ type, title, onClose, data }: DetailStatsModa
 
     // Simulation of detailed data based on type
     const renderContent = () => {
+        if (!data) return (
+            <div className="flex items-center justify-center h-48">
+                <p className="text-slate-500 text-xs font-black uppercase animate-pulse">Synchronizing Neural Grid...</p>
+            </div>
+        );
+
         switch (type) {
             case 'KPI_TOTAL_SKUS':
+                const maxCount = data.topCategories?.[0]?.count || 1;
                 return (
                     <div className="space-y-6">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Growth Rate</p>
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Global Density</p>
                                 <div className="flex items-center gap-2 mt-2">
                                     <TrendingUp className="text-emerald-500" size={16} />
-                                    <span className="text-xl font-black text-white">+2.4% MoM</span>
+                                    <span className="text-xl font-black text-white">{data.totalProducts} Units</span>
                                 </div>
                             </div>
                             <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
                                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Categories</p>
                                 <div className="flex items-center gap-2 mt-2">
                                     <Box className="text-blue-500" size={16} />
-                                    <span className="text-xl font-black text-white">42 Groups</span>
+                                    <span className="text-xl font-black text-white">{data.activeCategories} Groups</span>
                                 </div>
                             </div>
                         </div>
                         <div className="space-y-3">
                             <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-4">Top Volume Categories</h4>
-                            {[
-                                { name: 'Electronics', count: 4200, color: 'bg-blue-500' },
-                                { name: 'Raw Materials', count: 3800, color: 'bg-emerald-500' },
-                                { name: 'Packaging', count: 2100, color: 'bg-amber-500' },
-                                { name: 'Tools', count: 1800, color: 'bg-purple-500' },
-                            ].map((cat) => (
-                                <div key={cat.name} className="space-y-2">
-                                    <div className="flex justify-between text-xs font-bold">
-                                        <span className="text-slate-400">{cat.name}</span>
-                                        <span className="text-white">{cat.count.toLocaleString()} units</span>
+                            {data.topCategories?.map((cat: { name: string; count: number }, i: number) => {
+                                const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500'];
+                                return (
+                                    <div key={cat.name} className="space-y-2">
+                                        <div className="flex justify-between text-xs font-bold">
+                                            <span className="text-slate-400">{cat.name}</span>
+                                            <span className="text-white">{cat.count.toLocaleString()} units</span>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${(cat.count / maxCount) * 100}%` }}
+                                                transition={{ duration: 1, ease: 'easeOut' }}
+                                                className={`h-full ${colors[i % colors.length]}`}
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${(cat.count / 4200) * 100}%` }}
-                                            transition={{ duration: 1, ease: 'easeOut' }}
-                                            className={`h-full ${cat.color}`}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 );
             case 'KPI_MOVEMENTS':
+                const maxHourCount = Math.max(...(data.hourlyActivity?.map((h: any) => h.count) || [1]));
                 return (
                     <div className="space-y-6">
                         <div className="flex items-center justify-between p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20">
                             <div>
-                                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Peak Activity Hour</p>
-                                <p className="text-xl font-black text-white mt-1">11:00 AM - 12:30 PM</p>
+                                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Telemetry Window (12H)</p>
+                                <p className="text-xl font-black text-white mt-1">{data.movements24h} Movements Recorded</p>
                             </div>
                             <Clock className="text-blue-500" size={32} />
                         </div>
@@ -95,12 +101,13 @@ export function DetailStatsModal({ type, title, onClose, data }: DetailStatsModa
                             ))}
                         </div>
                         <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 relative h-32 flex items-end justify-between px-8">
-                            {[40, 70, 45, 90, 65, 80, 50, 85, 95, 60, 75, 55].map((h, i) => (
+                            {data.hourlyActivity?.map((h: { hour: number; count: number }, i: number) => (
                                 <motion.div
                                     key={i}
                                     initial={{ height: 0 }}
-                                    animate={{ height: `${h}%` }}
+                                    animate={{ height: `${(h.count / maxHourCount) * 100}%` }}
                                     className="w-2 bg-blue-500/40 rounded-t-sm hover:bg-blue-500 transition-colors"
+                                    title={`Hour ${h.hour}: ${h.count} movements`}
                                 />
                             ))}
                             <div className="absolute top-4 left-6">
@@ -116,28 +123,23 @@ export function DetailStatsModal({ type, title, onClose, data }: DetailStatsModa
                             <AlertCircle className="text-red-500 animate-pulse" size={24} />
                             <div>
                                 <p className="text-[10px] font-black text-red-400 uppercase tracking-widest">Action Required</p>
-                                <p className="text-sm font-bold text-white">14 Items below safety threshold</p>
+                                <p className="text-sm font-bold text-white">{data.criticalItems} Items below safety threshold</p>
                             </div>
                         </div>
                         <div className="space-y-2">
-                            {[
-                                { id: 'CPU-X9', name: 'Neural Processor X9', stock: 2, min: 10 },
-                                { id: 'SEN-V2', name: 'Optic Sensor V2', stock: 1, min: 5 },
-                                { id: 'BAT-XL', name: 'Battery Pack XL', stock: 4, min: 15 },
-                                { id: 'CBL-U3', name: 'Sync Cable U3', stock: 8, min: 20 },
-                            ].map(item => (
-                                <div key={item.id} className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between group hover:border-red-500/30 transition-colors">
+                            {data.criticalItemsList?.map((item: { sku_qr: string; name: string; stock_actual: number; stock_minimo: number }) => (
+                                <div key={item.sku_qr} className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between group hover:border-red-500/30 transition-colors">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-[8px] font-black text-red-500 border border-red-500/20">
                                             LOW
                                         </div>
                                         <div>
                                             <p className="text-[10px] font-black text-white uppercase">{item.name}</p>
-                                            <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{item.id}</p>
+                                            <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{item.sku_qr}</p>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-sm font-black text-red-400">{item.stock} / {item.min}</p>
+                                        <p className="text-sm font-black text-red-400">{item.stock_actual} / {item.stock_minimo}</p>
                                         <p className="text-[8px] font-bold text-slate-600 uppercase tracking-widest">Units Left</p>
                                     </div>
                                 </div>
@@ -156,23 +158,19 @@ export function DetailStatsModal({ type, title, onClose, data }: DetailStatsModa
                                         cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="12" fill="transparent"
                                         strokeDasharray={440}
                                         initial={{ strokeDashoffset: 440 }}
-                                        animate={{ strokeDashoffset: 440 - (440 * 0.78) }}
+                                        animate={{ strokeDashoffset: 440 - (440 * (data.storageCapacity / 100)) }}
                                         transition={{ duration: 1.5, ease: 'easeOut' }}
                                         className="text-emerald-500"
                                     />
                                 </svg>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span className="text-4xl font-black text-white">78%</span>
+                                    <span className="text-4xl font-black text-white">{data.storageCapacity}%</span>
                                     <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Occupancy</span>
                                 </div>
                             </div>
                         </div>
                         <div className="space-y-3">
-                            {[
-                                { label: 'Cold Storage', usage: '92%', status: 'Critical' },
-                                { label: 'General Racks', usage: '65%', status: 'Optimal' },
-                                { label: 'Hazardous Materials', usage: '42%', status: 'Optimal' },
-                            ].map(item => (
+                            {data.loadByZone?.map((item: any) => (
                                 <div key={item.label} className="flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800">
                                     <span className="text-xs font-bold text-white uppercase tracking-widest">{item.label}</span>
                                     <div className="flex items-center gap-3">
@@ -224,7 +222,7 @@ export function DetailStatsModal({ type, title, onClose, data }: DetailStatsModa
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-[200] flex items-center justify-end p-6"
+                    className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-200 flex items-center justify-end p-6"
                 >
                     <motion.div
                         initial={{ x: 100, opacity: 0 }}

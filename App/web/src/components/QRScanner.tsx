@@ -74,6 +74,15 @@ export function QRScanner({ isOpen, onClose, onScan }: QRScannerProps) {
                 }
             }
 
+            // EXTRA CHECK: Ensure the element exists in DOM before library tries to use it
+            const readerElement = document.getElementById('qr-reader');
+            if (!readerElement) {
+                console.warn('QR reader element not found yet, retrying...');
+                // If it's not found, it might be due to AnimatePresence delay
+                setTimeout(startScanner, 100);
+                return;
+            }
+
             const html5QrCode = new Html5Qrcode('qr-reader');
             qrCodeRef.current = html5QrCode;
 
@@ -180,7 +189,7 @@ export function QRScanner({ isOpen, onClose, onScan }: QRScannerProps) {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[100] flex items-center justify-center p-4"
+                    className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-100 flex items-center justify-center p-4"
                 >
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
@@ -258,7 +267,7 @@ export function QRScanner({ isOpen, onClose, onScan }: QRScannerProps) {
 
                                     {(status === 'scanning' || status === 'processing') && (
                                         <>
-                                            <div className="absolute inset-0 border-[40px] border-slate-950/50" />
+                                            <div className="absolute inset-0 border-40 border-slate-950/50" />
                                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-blue-500/30 rounded-lg shadow-[0_0_20px_rgba(59,130,246,0.1)]" />
                                             {status === 'scanning' && (
                                                 <motion.div

@@ -29,7 +29,7 @@ export function KPICard({ label, value, trend, icon: Icon, variant = 'default', 
                     <div className={`p-2 rounded-lg border ${variantStyles[variant]}`}>
                         <Icon size={20} />
                     </div>
-                    <span className="text-sm font-black uppercase tracking-[0.1em]">{label}</span>
+                    <span className="text-sm font-black uppercase tracking-widest">{label}</span>
                 </div>
                 <div className="flex items-end justify-between">
                     <h2 className="text-3xl font-black text-white tracking-tight">{value}</h2>
